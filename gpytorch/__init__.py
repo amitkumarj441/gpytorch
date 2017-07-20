@@ -1,9 +1,13 @@
 import torch
+from torch.autograd import Variable
+import utils
 from lazy import ToeplitzLazyVariable
 from .distribution import Distribution
 from .observation_model import ObservationModel
 from .math.functions import AddDiag, ExactGPMarginalLogLikelihood, Invmm, \
     Invmv, NormalCDF, LogNormalCDF, MVNKLDivergence, ToeplitzMV
+
+import pdb
 
 __all__ = [
     ToeplitzLazyVariable,
@@ -21,13 +25,15 @@ __all__ = [
 
 def mv(matrix, vector):
     if isinstance(matrix, ToeplitzLazyVariable):
-        if matrix.W is not None:
-            # Get W^{T}v
-            Wt_times_v = torch.dsmm(matrix.W.t(), vector)
-            # Get (TW^{T})v
+        if matrix.J_left is not None:
+            W_left = Variable(index_coef_to_sparse(matrix.J_left, matrix.C_left))
+            W_right = Variable(index_coef_to_sparse(matrix.J_right, matrix.C_right))
+            # Get W_{r}^{T}v
+            Wt_times_v = torch.dsmm(W_right.t(), vector)
+            # Get (TW_{r}^{T})v
             TWt_v = ToeplitzMV()(matrix.c,matrix.r,W_times_v)
-            # Get (WTW^{T})v
-            WTWt_v = torch.dsmm(matrix.W, TWt_v)
+            # Get (W_{l}TW_{r}^{T})v
+            WTWt_v = torch.dsmm(matrix.W_left, TWt_v)
             return WTWt_v
         else:
             # Get Tv
@@ -42,17 +48,17 @@ def mm(matrix, vector):
 
 def add_diag(input, diag):
     if isinstance(input, ToeplitzLazyVariable):
-        c_new = input.c.clone()
-        r_new = input.r.clone()
-        c_new[0] += diag
-        r_new[0] += diag
-        return ToeplitzLazyVariable(c_new, r_new, input.W)
+        e1 = Variable(torch.eye(len(input.c))[0])
+        c_new = input.c + e1.mul(diag.expand_as(e1))
+        r_new = input.r + e1.mul(diag.expand_as(e1))
+        return ToeplitzLazyVariable(c_new, r_new, input.J_left, input.C_left, input.J_right, input.C_right)
     else:
         return AddDiag()(input, diag)
 
 
 def exact_gp_marginal_log_likelihood(covar, target):
-    return ExactGPMarginalLogLikelihood()(covar, target)
+    if isinstance(covar, ToeplitzLazyVariable):
+        return ExactGPMarginalLogLikelihood(structure='toeplitz')(covar, target)
 
 
 def invmm(mat1, mat2):

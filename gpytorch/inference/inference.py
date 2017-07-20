@@ -5,6 +5,8 @@ from gpytorch import ObservationModel
 from copy import deepcopy
 from torch.autograd import Variable
 
+import pdb
+
 
 class Inference(object):
     def __init__(self, observation_model):
@@ -38,6 +40,8 @@ class Inference(object):
             if len(output) == 2 and isinstance(output[0], GaussianRandomVariable):
                 if not isinstance(self.observation_model, _ExactGPPosterior):
                     self.observation_model = _ExactGPPosterior(self.observation_model)
+
+                    pdb.set_trace()
 
                     def log_likelihood_closure():
                         self.observation_model.zero_grad()

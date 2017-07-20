@@ -5,7 +5,14 @@ from torch.autograd import Function
 
 
 class ExactGPMarginalLogLikelihood(Function):
-    def forward(self, matrix, y):
+    def __init__(self, structure=None):
+        self.structure = structure
+
+    def forward(self, *inputs):
+        if self.structure == 'toeplitz':
+            c, r, y = inputs
+            mv_closure
+
         mat_inv_y = LinearCG().solve(matrix, y)
         # Inverse quad form
         res = mat_inv_y.dot(y)

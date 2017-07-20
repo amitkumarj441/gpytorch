@@ -46,6 +46,21 @@ class pd_catcher(object):
         return wrapped_function
 
 
+def index_coef_to_sparse(J, C):
+    J_list = [[],[]]
+    value_list = []
+    for i in range(num_target_points):
+        for j in range(num_coefficients):
+            if C[i,j] == 0:
+                continue
+            J_list[0].append(i)
+            J_list[1].append(J[i,j])
+            value_list.append(C[i,j])
+
+    index_tensor = torch.LongTensor(J_list)
+    value_tensor = torch.FloatTensor(value_list)
+    W = torch.sparse.FloatTensor(index_tensor, value_tensor, torch.Size([num_target_points,num_grid_points]))
+
 def toeplitz(c, r):
     """
     Constructs tensor version of toeplitz matrix from column vector
