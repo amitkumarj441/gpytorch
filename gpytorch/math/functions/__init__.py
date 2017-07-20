@@ -5,6 +5,8 @@ from .invmv import Invmv
 from .normal_cdf import NormalCDF
 from .log_normal_cdf import LogNormalCDF
 from .mvn_kl_divergence import MVNKLDivergence
+from .toeplitz_mv import ToeplitzMV
+
 
 __all__ = [
     AddDiag,
@@ -14,4 +16,5 @@ __all__ = [
     NormalCDF,
     LogNormalCDF,
     MVNKLDivergence,
+    ToeplitzMV,
 ]
