@@ -1,7 +1,9 @@
 import math
 import torch
+import gpytorch
 from torch.autograd import Variable
 
+import pdb
 
 class LinearCG(object):
     """
@@ -46,13 +48,10 @@ class LinearCG(object):
         if isinstance(A, Variable) or isinstance(b, Variable):
             raise RuntimeError('LinearCG is not intended to operate directly on Variables or be used with autograd.')
 
-        if not isinstance(A, torch.Tensor) or not isinstance(b, torch.Tensor):
-            raise RuntimeError('LinearCG is intended to operate on tensors.')
-
         if x is None:
             x = self.precondition_closure(b)
 
-        residual = b - A.mv(x)
+        residual = b - gpytorch.mv(A, x)
 
         # Preconditioner solve is exact in some cases
         rtr = residual.dot(residual)
@@ -65,7 +64,7 @@ class LinearCG(object):
         r_dot_z = residual.dot(z)
 
         for k in range(self.max_iter):
-            Ap = A.mv(p)
+            Ap = gpytorch.mv(A, p)
             alpha = r_dot_z / (p.dot(Ap) + 1e-10)
 
             x = x + alpha * p
@@ -94,13 +93,10 @@ class LinearCG(object):
         if isinstance(A, Variable) or isinstance(B, Variable):
             raise RuntimeError('LinearCG is not intended to operate directly on Variables or be used with autograd.')
 
-        if not isinstance(A, torch.Tensor) or not isinstance(B, torch.Tensor):
-            raise RuntimeError('LinearCG is intended to operate on tensors.')
-
         if X is None:
             X = self.precondition_closure(B)
 
-        residuals = B - A.mm(X)
+        residuals = B - gpytorch.mm(A, X)
 
         # Preconditioner solve is exact in some cases
         rtr = residuals.pow(2).sum(0)
@@ -112,7 +108,7 @@ class LinearCG(object):
         r_dot_zs = residuals.mul(z).sum(0)
 
         for k in range(min(self.max_iter, n)):
-            AP = A.mm(P)
+            AP = gpytorch.mm(A, P)
             PAPs = AP.mul(P).sum(0)
 
             alphas = r_dot_zs.div(PAPs + 1e-10)

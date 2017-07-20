@@ -9,6 +9,13 @@ __all__ = [
     ObservationModel
 ]
 
+def mv(matrix, vector):
+    return torch.mv(matrix, vector)
+
+
+def mm(matrix, vector):
+    return torch.mm(matrix, vector)
+
 
 def add_diag(input, diag):
     return AddDiag()(input, diag)

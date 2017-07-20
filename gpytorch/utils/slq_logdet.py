@@ -1,4 +1,5 @@
 import torch
+import gpytorch
 import math
 
 
@@ -30,7 +31,7 @@ class SLQLogDet(object):
         Q[:, 0] = b
         u = b
 
-        r = A.mv(u)
+        r = gpytorch.mv(A, u)
         a = u.dot(r)
         b = r - a * u
 
@@ -79,12 +80,10 @@ class SLQLogDet(object):
         return u, v, a, norm_v
 
     def logdet(self, A):
-        if A.numel() == 1:
+        if isinstance(A, torch.Tensor) and A.numel() == 1:
             return math.fabs(A.squeeze()[0])
 
         n = len(A)
-        jitter = torch.eye(n) * 1e-5
-        A = A + jitter
         V = torch.sign(torch.randn(n, self.num_random_probes))
         V.div_(torch.norm(V, 2, 0).expand_as(V))
 
